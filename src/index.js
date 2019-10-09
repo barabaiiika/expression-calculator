@@ -4,12 +4,13 @@ function eval() {
 }
 
 function expressionCalculator(expr) {
+    if (expr.match(/\(/g).length !== expr.match(/\)/g).length) throw new Error("ExpressionError: Brackets must be paired");
     while (expr.match(/[\(,\))]/)) {
         const pre = expr;
-        expr.replace(/\(.+?\)/g, calc(match));
-        if (pre === expr) throw new Error("ExpressionError: Brackets must be paired");
+        expr = expr.replace(/\(.+?\)/g, calc);
+        // if (pre === expr) throw new Error("ExpressionError: Brackets must be paired");
     }
-    return calc(expr)
+    return Number(calc(expr));
 }
 
 module.exports = {
@@ -17,73 +18,45 @@ module.exports = {
 }
 
 function calc(string) {
-    let arr = string.replace(/[\(,\))]/g, '').split(' ').filter(item => item);
-
-    let multipleIndex;
-    let divisionIndex;
-    let plusIndex;
-    let minusIndex;
-
-    do {
-        multipleIndex = arr.indexOf('*');
-        divisionIndex = arr.indexOf('/');
-        if (multipleIndex < divisionIndex) {
-            const index = multipleIndex;
-            arr.splice(index - 1, 3, arr[index-1] * arr[index+1]);
-        } else if (multipleIndex > divisionIndex) {
-            const index = divisionIndex;
-            if (Number(arr[index+1]) === 0) throw new Error("TypeError: Division by zero.");
-            arr.splice(index - 1, 3, arr[index-1] / arr[index+1]);
+    let arr = string.match(/\d+\.?\d*|[*/+-]/g);
+    let arrAfterCalc = [];
+    
+    for (let i = 0; i < arr.length; i++) {
+        const item = arr[i];
+        const previousItem = arrAfterCalc[arrAfterCalc.length - 1];
+        if (['*', '/'].includes(item)) {
+            const result = (item === '*') ? (previousItem * arr[i+1]) : (previousItem / arr[i+1]);
+            if (Math.abs(result) === Infinity) throw new Error("TypeError: Division by zero.");
+            arrAfterCalc.pop();
+            arrAfterCalc.push(result);
+            i++;
+            
+        } else {
+            arrAfterCalc.push(item);
         }
+        
+    }
 
-    } while (multipleIndex + divisionIndex > -2);
+    arr = [...arrAfterCalc];
+    arrAfterCalc = [];
 
-    do {
-        plusIndex = arr.indexOf('+');
-        minusIndex = arr.indexOf('-');
-        if (plusIndex < minusIndex) {
-            const index = plusIndex;
-            arr.splice(index - 1, 3, Number(arr[index-1]) + Number(arr[index+1]));
-        } else if (plusIndex > minusIndex) {
-            const index = minusIndex;
-            arr.splice(index - 1, 3, arr[index-1] - arr[index+1])
+    for (let i = 0; i < arr.length; i++) {
+        const item = arr[i];
+        let previousItem = arrAfterCalc[arrAfterCalc.length - 1];
+        if (['+', '-'].includes(item)) {
+            previousItem = previousItem || '0';
+            const result = (item === '+') ? (Number(previousItem) + Number(arr[i+1])) : (previousItem - arr[i+1]);
+            arrAfterCalc.pop();
+            arrAfterCalc.push(result);
+            i++;
+        } else {
+            arrAfterCalc.push(item);
         }
+        
+    }
 
-    } while (plusIndex + minusIndex > -2);
-
-
-
-
-
-
-    // while (arr.includes('*') || arr.includes('/')) {
-    //     arr = arr.map((item, index, arr) => {
-    //         switch (item) {
-    //             case '*':
-    //                 return arr[index-1] * arr[index+1];
-    //             case '/':
-    //                 if (Number(arr[index+1]) === 0) throw new Error("TypeError: Division by zero.");
-    //                 return arr[index-1] / arr[index+1];
-    //             default:
-    //                 break;
-    //         }
-    //         return item;
-    //     });
-    // }
-
-    // while (arr.includes('+') || arr.includes('-')) {
-    //     arr = arr.map((item, index, arr) => {
-    //         switch (item) {
-    //             case '+':
-    //                 return Number(arr[index-1]) + Number(arr[index+1]);
-    //             case '-':
-    //                 return arr[index-1] - arr[index+1];
-    //             default:
-    //                 break;
-    //         }
-    //         return item;
-    //     });
-    // }
-
-    return arr.toString();
+    return arrAfterCalc.toString();
 }
+
+
+expressionCalculator('((1 + 2 * 3)');
