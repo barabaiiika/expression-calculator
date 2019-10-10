@@ -4,21 +4,17 @@ function eval() {
 }
 
 function expressionCalculator(expr) {
-    if (expr.match(/\(/g).length !== expr.match(/\)/g).length) throw new Error("ExpressionError: Brackets must be paired");
     while (expr.match(/[\(,\))]/)) {
         const pre = expr;
-        expr = expr.replace(/\(.+?\)/g, calc);
-        // if (pre === expr) throw new Error("ExpressionError: Brackets must be paired");
+        expr = expr.replace(/\([^()]+?\)/g, calc);
+        
+        if (pre === expr) throw new Error("ExpressionError: Brackets must be paired");
     }
     return Number(calc(expr));
 }
 
-module.exports = {
-    expressionCalculator
-}
-
 function calc(string) {
-    let arr = string.match(/\d+\.?\d*|[*/+-]/g);
+    let arr = string.match(/((?<!\d\s?)-?)\d+\.?\d*|[*/+-]/g);
     let arrAfterCalc = [];
     
     for (let i = 0; i < arr.length; i++) {
@@ -58,5 +54,6 @@ function calc(string) {
     return arrAfterCalc.toString();
 }
 
-
-expressionCalculator('((1 + 2 * 3)');
+module.exports = {
+    expressionCalculator
+}
